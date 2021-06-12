@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/8.6.1/jsoneditor.min.css" rel="stylesheet"
+        type="text/css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/8.6.1/jsoneditor.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+    <style>
+        .flex-row {
+            display: inline-flex;
+            justify-content: flex-start;
+            align-items: center;
+            flex-wrap: nowrap;
+            flex-grow: 1;
+        }
+
+        .flex-row>input {
+            width: 100px;
+            margin-left: 10px;
+        }
+
+        .control-container {
+            display: inline-flex;
+            width: 100%;
+
+        }
+
+        .element-container {
+            display: flex;
+            justify-content: flex-start;
+            align-content: flex-start;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+
+        .element-container>div {
+            margin: 20px;
+        }
+
+        .element-group {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            align-items: flex-start;
+        }
+
+        .element-group input.number,
+        .element-group>*:not(:first-child) {
+            width: 100px;
+            margin-left: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <!--[if lt IE 7]>
+            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+
+    <div class="control-container">
+        <div id="jsoneditor" style="width: 700px; height: 400px; display: inline-block;"></div>
+        <div class="flex-row test-get">
+            <div class="element-container">
+                <div class="element-group">
+                    <button class="btn btn-primary" id="send">send json</button>
+
+                </div>
+                <div class="element-group">
+                    <button id="test-get" class="btn btn-primary">execute</button>
+                    <input placeholder="skip" class="form-control number" type="number" name="test" id="test1">
+                    <input placeholder="take" class="form-control number" type="number" name="test" id="test2">
+                    <div class="input-group mb-3">
+                        <% if (sorts) { %>
+                            <select class="custom-select" id="inputGroupSelect01">
+                                <option>Sort By</option>
+                                <% for( let index = 0; index < sorts.length; index++ ) { %>
+                                        <option value="<%-sorts[index]%> "><%-sorts[index] %> </option>
+                                <% } %>
+                            </select>
+                        <% } %>
+                    </div>
+                    
+                </div>
+                <div class="element-group">
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text" id="basic-addon1">@</span>
+                        </div>
+                        <input id="search" type="text" class="form-control" placeholder="Search String" aria-label="Username" aria-describedby="basic-addon1">
+                      </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const sorts = <%- JSON.stringify(sorts) %>;
+        const url = "/<%=route%>";
+        const element = document.getElementById('test-get');
+        const skip = document.getElementById('test1');
+        const take = document.getElementById('test2');
+        const select = document.getElementById('inputGroupSelect01');
+        const search = document.getElementById('search');
+        let skipNtake = {
+            skip: 0,
+            take: 0,
+            
+        }
+        let sortBy = '';
+        let searchString = '';
+        search.addEventListener('input', (e) => {
+            searchString = e.target.value;
+        })
+        select.addEventListener('change', (e) => {
+            console.log('change', e.target.selectedIndex, e.target.options);
+            sortBy = e.target.options[e.target.selectedIndex].getAttribute('value')
+            console.log(sortBy);
+        })
+        skip.addEventListener('input', (e) => {
+            skipNtake = {
+                ...skipNtake,
+                skip: e.target.value
+            }
+        })
+        take.addEventListener('input', (e) => {
+            skipNtake = {
+                ...skipNtake,
+                take: e.target.value
+            }
+        })
+
+        const generateQueryParams = (object) => {
+            return Object.keys(object)
+                .map(key => `${key}=${object[key]}`)
+                .join('&');
+        }
+
+        element.addEventListener('click', async () => {
+            const result = await fetch(url + `?${encodeURI(generateQueryParams(
+                {
+                    ...skipNtake, 
+                    ...{...sortBy ? {sortBy} : {}},
+                    ...{...searchString ? {searchString} : {}}
+                }
+                    ))}`);
+            const data = await result.json();
+            window.editor.set(data);
+        })
+        // create the editor
+        const container = document.getElementById('jsoneditor')
+        const options = {
+            modes: ['text', 'code', 'tree', 'form', 'view'],
+            mode: 'code',
+            ace: ace
+        }
+        const json = {
+        }
+        const editor = new JSONEditor(container, options, json);
+
+        window.editor = editor;
+        document.getElementById('send').addEventListener('click', () => {
+            fetch('/conference', {
+                method: 'post',
+                headers: {
+                    "Content-Type": 'application/json',
+                },
+                body: JSON.stringify(editor.get()),
+            })
+        })
+    </script>
+</body>
+
+</html>
