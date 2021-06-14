@@ -4,6 +4,7 @@ import Injector from './injector/injector';
 import generateConferenceRoutes from './routes/conference/conference';
 import generatePlayerRoutes from './routes/player/player';
 import generateTeamRoutes from './routes/team/team';
+const PORT = process.env.PORT_NUM;
 // keeps it from being tree-shaken
 const ejs = require("ejs").__express;
 const app = express();
@@ -26,7 +27,7 @@ connect().then((connection) => {
     Injector.connection = connection;
     Injector.queryBuilder = knex;
     Injector.hydrateInjections();
-    app.listen(4000, () => {
-        console.log('listening on port 4000')
+    app.listen(PORT, () => {
+        console.log(`listening on port ${PORT}`)
     });
 })
